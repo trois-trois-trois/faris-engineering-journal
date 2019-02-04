@@ -7,7 +7,7 @@ SDC journal
 **1.**
 - The chosen project for our SDC group is the ESPN NFL Team Page. I'll be working on the standings service that was originally made by Kevin Phung. This service renders the NFL Team standings within the different divisions of the league. There are two components to this service that are rendered to the page:
 
-  - Full Standings Component: This component will render all of the NFL team standings within each sub division of the league. This component isn't rendered onto the main page but is accessed through the standings component. Sub divisions are hard coded, but the information from the database that is rendered to this page include:
+  - **Full Standings Component**: This component will render all of the NFL team standings within each sub division of the league. This component isn't rendered onto the main page but is accessed through the standings component. Sub divisions are hard coded, but the information from the database that is rendered to this page include:
 
     - Team name
     - Team logo
@@ -21,7 +21,7 @@ SDC journal
 
   ![full standings][one]
 
-  - Standings Component: This component renders one sub division of the Full Standings Component to the main page, which is always the NFC WEST division. The information from the database that gets rendered is the same as the Full Standings Component.
+  - **Standings Component**: This component renders one sub division of the Full Standings Component to the main page, which is always the NFC WEST division. The information from the database that gets rendered is the same as the Full Standings Component.
 
   ![standings][two]
 
