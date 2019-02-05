@@ -58,6 +58,25 @@ reFeedbackVector(v8::internal::CompilationInfo*) [/Users/fh/.nvm/versions/node/v
 11: 0x30e2493092a7
 ```
 - I'll need to perform some fine-tuning with my seed script. One idea I have is turning the seed function into an async function so that records are inserted one at a time, but this would require me to refactor the code that uses knex's bulkInsert method, which I find to be helpful overall. I'll need to play around some more to figure out how I can insert 10 million records in about 50 minutes.
+
+- I successfully completed the insertion of 10m records! The official time is 24min8s56ms. They key was chaining knex's batch insert in promise format.
+
+```
+exports.seed = knex => knex('standings').del()
+  .then(() => knex.batchInsert('standings', generateDataSet(1000000), 1000)
+    .then(() => knex.batchInsert('standings', generateDataSet(1000000), 1000))
+    .then(() => knex.batchInsert('standings', generateDataSet(1000000), 1000))
+    .then(() => knex.batchInsert('standings', generateDataSet(1000000), 1000))
+    .then(() => knex.batchInsert('standings', generateDataSet(1000000), 1000))
+    .then(() => knex.batchInsert('standings', generateDataSet(1000000), 1000))
+    .then(() => knex.batchInsert('standings', generateDataSet(1000000), 1000))
+    .then(() => knex.batchInsert('standings', generateDataSet(1000000), 1000))
+    .then(() => knex.batchInsert('standings', generateDataSet(1000000), 1000))
+    .then(() => knex.batchInsert('standings', generateDataSet(1000000), 1000)));
+
+```
+
+- I met with my team member Amit and we had discussed how chaining insertions might be the key. This is because it's hard to hold so many records in any one function. I knew that the batch insert utility could insert 1m records in 1000 chunks, so I decided to try chaining ten batch inserts in that same format and success!
 ---
 
 [one]: images/fullstandingscomponentsnapshot.png
