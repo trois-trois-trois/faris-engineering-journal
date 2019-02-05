@@ -33,6 +33,16 @@ SDC journal
 
 - Generating 1 million records proved to be a success. It took about 2 minutes and 21 seconds to complete. At about 1.5 million records is when I get an allocation failure. I've copied the full error message below for reference.
 
+- With 10 million records in the database I had to make adjustments to my server code so that the API call would not fetch all 10 million records. To do this I went through Bookshelf's documentation and found that the collection had a couple methods I could utilize. In summary I had to make sure I was performing the query below each time I was making an API request for the data:
+
+```
+  SELECT * FROM STANDINGS ORDER BY ID DESC LIMIT 100;
+```
+
+- Luckily Bookshelf has the OrderBy and Query methods to help structure the API call on the Standings collections to mimic the query above.
+
+- Work for generating 10 million records is for the most part done. Now I'll be conducting some benchmarking tests on the database before I start with my NoSQL Database.
+
 ```
 <--- JS stacktrace --->
 
