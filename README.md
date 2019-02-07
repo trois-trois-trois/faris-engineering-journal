@@ -105,6 +105,8 @@ exports.seed = knex => knex('standings').del()
 
   ![benchmark query][four]
 
+---
+
 
 [one]: images/fullstandingscomponentsnapshot.png
 [two]: images/standingscomponentsnapshot.png
