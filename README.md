@@ -89,5 +89,24 @@ exports.seed = knex => knex('standings').del()
 - Work for generating 10 million records is for the most part done. Now I'll be conducting some benchmarking tests on the database before I start with my NoSQL Database.
 ---
 
+## February 6th, 2019
+
+**1. Benchmarking Database**
+
+- In phase 1 one of our objectives is to perform some simple benchmarking tests to measure the initial performance of our databases. I accomplished this by measuring 2 aspects of my SQL database:
+
+  - **1. Measure and record the time it takes to insert 10,000,000 records**
+    This was done by creating one date function before the seed function ran, another after it ran, and taking the difference in time between the two in milliseconds. I've posted the results below.
+
+  ![benchmark records][three]
+
+  - **2. Measure and record time it takes to execute a simple read query**
+    I used one of PostgreSQL's built in functions to analyze the time it took to randomly select one of 10,000,000 within the database. The first initial results are unfortunate as it took about 19 seconds to perform a simple read query of 1 record. The goal is to achieve a read query speed of 50ms, so I have some work to do to try to minimize my initial time.
+
+  ![benchmark query][four]
+
+
 [one]: images/fullstandingscomponentsnapshot.png
 [two]: images/standingscomponentsnapshot.png
+[three]: images/benchmark1.png
+[four]: images/benchmark2.png
