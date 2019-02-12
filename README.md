@@ -107,8 +107,68 @@ exports.seed = knex => knex('standings').del()
 
 ---
 
+## February 11th, 2019
+
+**1. Refactor Database to Cassandra**
+
+- The next step of phase 1 was to implement a NoSQL DBMS for our chosen project. Since MongoDB was the original NoSQL DBMS we chose Cassandra.
+
+- Implmenting Cassandra came with quite a few challenges, the lack of clear documentation on how to implement Cassandra with Express/NodeJS being one of them. One of the first errors I encountered while setting up Cassandra was a thrift socket error:
+
+![cassandra thrift socket error][five]
+
+- When loading Cassandra it will create a thrift socket protocol. Supposedly this is a type of interface that was originally used with Cassandra, but the standard nowadays is CQL or the Cassandra Query Language. Why Cassandra stil lloads this I'm not sure as I already installed CQL with the Python package manager. After some trial and error I was able to resolve this issue by installing an older Java SDK (version 1.8). I had other issues running Cassandra that weren't resolved by simply running ```brew services start cassandra``` after installation. In order to resolve these issues I had to remove lines from the ```cassandra-env.sh``` file after running ```cassandra -f```. Luckily these got resolved quickly.
+
+- The second major issue I had when finishing installation was running CQL for the first time. By default, CQL seems to connect to ```localhost 9042``` but I ran into issues connecting to this port. After searching for solutions on the internet I tried connecting to CQL using port 9160.
+
+![cassandra cql port error][six]
+
+- Since I'm not using the standard port I had to think about how to make my config file connect to the right port too. Luckily with the installation of Cassandra-Driver there was a helpful method to do just that.
+
+- I was able to succesfully insert mock data and render it to the front end. The next step is to insert 10 million records.
+
+**2. Seeding 10,000,000 records and Benchmarking**
+
+- Inserting 10,000,000 records had it's own set of challenges. First was figuring out the right format to write my insertion function so that I wouldn't end up with a heap memory allocation error like I did with my Postgres database. I ended up utilizing the driver's built in batch function to insert multiple records. Unfortunately the batch function could only insert 125 records at a time, so I chained several batch methods together in promises so I could insert 20,000 records at a time. From there I looped the insertion to run 500 times so that I could insert all 10m records. The first warning I encountered with this was a timeout warning:
+
+```
+(node:16353) UnhandledPromiseRejectionWarning: Unhandled promise rejection (rejection id: 1): OperationTimedOutError: The host 127.0.0.1:9160 did not reply before timeout 12000 ms
+```
+
+- Luckily this isn't fatal, and I modified my timeout settings in the ```cassandra.yaml``` file to make sure it wasn't. It took some time but I was able to successfully insert 10 million records in about 21 minutes.
+
+- The simplest way to check for 10,000,000 records is to perform a count function in CQL, but unfortunately performing such a function is not possible because of timeout issues:
+
+```
+cqlsh:espn> select count(uid) from standings;
+ReadTimeout: Error from server: code=1200 [Coordinator node timed out waiting for replica nodes' responses] message="Operation timed out - received only 1 responses." info={'received_responses': 1, 'required_responses': 1, 'consistency': 'ONE'}
+```
+- In order to confirm whether I had 10 million records or not, I added a logging statement to the end of my batch insertions of 20,000:
+
+```
+const startTime = new Date().getTime();
+...
+.then( ()=> db.batch(generateBatch(), { prepare: true})) // 20,000
+.then(() => console.log(`Successfully inserted 20,000 records in ${new Date().getTime() - startTime}ms`));
+```
+
+- Since the chain of batch insertions creates 20,000 records, and the loop runs 500 times, I copied each logging statement and pasted them into an Excel sheet and summed up the rows. This confirmed that I had 10,000,000.
+
+![cassandra 10m record confirmation][seven]
+
+- The logging statements also served as my benchmark. At every 20,000 records, a timestamp is calculated to figure out how many milliseconds the insertion of 20,000 took. Looking at the last insertion shows a time of 1274791ms or about 21 minutes.
+
+![cassandra benchmark][eight]
+
+- Although this method is crude, I was able to insert the required amount of data in less than 50 minutes. The next step will be to fine-tune Cassandra to see if I can reduce that time and make my seeding code look cleaner. I'll most likely deploy my PostgerSQL and Cassandra databases to AWS EC2 so that I can perform more tests to see which comes out faster. At this point it's about the same, PostgresSQL is only about 5 minutes faster (but the code is cleaner!).
+
+---
 
 [one]: images/fullstandingscomponentsnapshot.png
 [two]: images/standingscomponentsnapshot.png
 [three]: images/benchmark1.png
 [four]: images/benchmark2.png
+[five]: images/cassandraerror1.png
+[six]: images/cassandraerror2.png
+[seven]: images/cassandrabenchmark2.png
+[eight]: images/cassandrabenchmark1.png
