@@ -164,6 +164,18 @@ const startTime = new Date().getTime();
 
 ---
 
+## February 12th, 2019
+
+**1. Adding CRUD support for Primary Database**
+
+- We've decided to set our primary database to be Postgres. One of the last tasks for Phase 1 is to add basic support for CRUD (Create, Read, Update, Delete) operations. This took less than an hour to implement since we didn't have to worry about adding client-side functionality to support these CRUD operations. For the full rundown on how the CRUD operations are written out for my service check out the README that's linked below.
+
+https://github.com/fhabib229/kevin-services-standings/blob/crud/server/CRUD.md
+
+- The next step is to deploy the primary database to AWS EC2, though as I mentioned yesterday, I'll be deploying both databases to EC2 to perform additional tests. Before I do that I'm going to try different methods of inserting 10m records with Postgres and Cassandra, specifically inserting the data with csv files. My team has reported quick speeds for this method so I'm looking forward to implementing it for my own service and performing additional tests to confirm this.
+
+---
+
 [one]: images/fullstandingscomponentsnapshot.png
 [two]: images/standingscomponentsnapshot.png
 [three]: images/benchmark1.png
