@@ -182,7 +182,7 @@ const startTime = new Date().getTime();
 
 - I did a quick modification of the insertion script I used to get a more accurate benchmark of how long it takes to insert 10,000,000 records. Before I addeed 500 logging statements and pasted them into Excel to tally up if I had the right amount of records. Now I've added a counter variable that keeps track of when each batch of 20,000 records has been added. At the final batch of 20,000 (when count = 500) the script will print a message to the terminal showing the time it took to insert all 10m records. Removing the previous logs and only adding 1 reduced my data insertion time by about 4 minutes, bringing the total time to about 18 minutes.
 
-[cassandra final benchmark][nine]
+  [cassandra final benchmark][nine]
 
 - Not bad at all. I probably won't be playing with csv insertions with Cassandra. My other team members did so to get all 10m records in in a shorter amount of time, but I'm happy with leaving my Cassandra database where it is at the moment since this is not the primary database choice.
 
