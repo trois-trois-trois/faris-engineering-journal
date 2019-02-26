@@ -1,9 +1,17 @@
 # faris-engineering-journal
 SDC journal
 
+## Entries
+
+1. [February 4th, 2019](#2.4.2019)
+2. [February 11th, 2019](#2.11.2019)
+3. [February 12th, 2019](#2.12.2019)
+4. [February 16th, 2019](#2.16.2019)
+5. [Database](#database)
+
 ---
 
-## February 4th, 2019
+## 2.4.2019
 **1. Choosing FEC Project and Service**
 - The chosen project for our SDC group is the ESPN NFL Team Page. I'll be working on the standings service that was originally made by Kevin Phung. This service renders the NFL Team standings within the different divisions of the league. There are two components to this service that are rendered to the page:
 
@@ -107,7 +115,7 @@ exports.seed = knex => knex('standings').del()
 
 ---
 
-## February 11th, 2019
+## 2.11.2019
 
 **1. Refactor Database to Cassandra**
 
@@ -189,6 +197,88 @@ const startTime = new Date().getTime();
 - The next step is to perform some simple csv insertions with my Postgres Database since this will be my primary database choice, then I'll deploy the database, service, and proxy server to EC2.
 
 ---
+
+## February 24th, 2019
+
+**1. Data Insertions w/ CSV into Postgres**
+
+- Insertion of 10,000,000 records to my primary database with a csv file did not go smooth. I was able to insert 1,000,000 records into the database in less than a minute, but adding additional lines to the csv file just created heap allocation memory errors. I also received timeout errors connecting to the Postgres Database through KnexJS while configuring my csv script.
+  ![postgres csv errors][ten]
+- After spending about 2-3 hours trying to solve my errors, I decided to give up on trying to insert 10m records through a csv file. I already have a working method with batch insertions, so I'll stick with that when I move to deployment and stress-testing.
+
+**2. Deploying Service + Database to EC2**
+
+- Deploying to AWS EC2 wasn't too difficult after the FEC project. Although we didn't explicitly set out to use EC2 in FEC, we used it as a biproduct of deploying our project to Elastic Beanstalk. This experience already made me more familiar with understanding how AWS works and what I could expect from launching my EC2 instance for the Standings service.
+
+- Initially I created an instance with 30 GiB of storage and 100 IOPS and chose an instance with Ubuntu. Installing npm and node was relatively easy with the commands below:
+
+```curl -sL https://deb.nodesource.com/setup_11.x | sudo -E bash -```
+```sudo apt-get install -y nodejs```
+
+- After that I had to figure out how to deploy postgres to my instance. At first I thought I could use homebrew but quickly discovered that it's easier to install postgres through Ubuntu's APT repositories. I logged in as the root user and ran the following command below to install:
+
+```apt-get install postgresql postgresql-contrib```
+
+- Then I cloned my service's repo using git and installed all dependencies. I ran into my first set of errors when trying to start my server in my instance.
+
+  ![ec2 server error][eleve]
+
+- After researching the issue I discovered that I had to reconfigure the ports in my Knex configuration files to match the ports that could be accessed through my EC2 instance.
+
+```
+//knexfile.js
+module.exports = {
+  development: {
+    client: 'pg',
+    connection: {
+      host: '0.0.0.0', // ---> This was changed from localhost to 0.0.0.0
+...
+```
+
+```
+// config.js
+const knex = require('knex')({
+  client: 'pg',
+  connection: {
+    host: '0.0.0.0', // ---> This was changed from localhost to 0.0.0.0
+...
+```
+
+- After fixing this I moved onto seeding my 10m records. This proved to be the trickiest part of deploying my instance as there were several memory allocation and timeout errors from trying to insert 1m records at a time.
+
+  ![ec2 seeding errors][twelve]
+
+- I quickly realized that generating 10 million unique records and inserting them all at once was not a good idea. So instead I resolved to generate 100,000 unique records and insert them 100 times, giving me 10 million records into my database but only 100,000 of which were unique. This is doable for the standings service as only 32-100 records actually get pulled to the API and rendered to the front end. This way I can still stress test my database and insert 10 million records in a timely manner. Lastly I tried increasing the volume to 500 GiB and 1000 IOPS out curiosity to see if it would insert the records faster. My final time was about 4 minutes and unfortunately increasing the volume size had little to no effect on this as I was able to create another instance with 30 GiB and 100 IOPS and still insert the records in 4 minutes.
+
+  ![ec2 10m records][thirteen]
+
+---
+
+## Database
+
+**Choosing Primary Database**
+
+- When comparing my RDBMS (PostgreSQL) and NoSQL (Cassandra) choices for this project it was not clear which would serve my service well as my primary database. I conducted some research to compare the two databases and see where each had their strengths and where they fell short.
+
+- **PostgreSQL**
+
+  - PostgreSQL is one of the most popular choices when it comes to RDBMSs. One of its strengths is in its transaction support. You can think of a transaction like some amount of work being done on a database. Often databases need to provide work that will allow recovery from database failures and allow for consistency when executions on that amount of work stops. One example of where this is important is in money transfers from one bank to another. A database with strong transaction support will be able to accurately store the correct amounts from each bank as it transfers the amount from one to the other even when there is a system failure. Postgres is also ACID (atomicity, consistency, isolation, durability) compliant, which means that all transactions conducted in Postgres are completed in a timely manner. Postgres and other relational engines are optimized for reading data by keeping it in memory. This means applications that are read-intensive could perform well on a RDBMS.
+
+  - Where Postgres falls short is in scaling for big data (Though this is technically no longer the case with Postgres XL). Most RDBMS cannot exceed the capacity of a single node (which is about 1TB or less). This makes it fine for most web applications but it will fall short when dealing with a mass volume of data. PostgreSQL is also not suitable for write-intensive applications like Facebook.
+
+- **Cassandra**
+
+  - Cassandra is one of the top choices when it comes to NoSQL databases. Cassandra is known as a wide-column store database, which means that data in each row can vary and do not have to be structured the same way. Cassandra is designed to scale beyond a single node which makes it perfect for storing large amounts of data (1 PB or more). It achieves this by handling the swaths of data across multiple nodes or clusters, in a parallel computing structure making it so that each node is not a single point of failure.  Cassandra is also optimized for writing data, so social media applications are a perfect fit for Cassandra as many users can create posts to the application with out a single hiccup.
+
+  - Since Cassandra is a NoSQL DBMS it falls short in having normalized data. This means you can't have JOIN tables so an applications would have to make multiple queries to the database in order to obtain the information it needs. Cassandra also lacks certain abilities that RDBMS have like transforming data with a SUM() function.
+
+- **Summary**
+
+  - Either database would work well for my application. Since the application only runs on a single node and contains no more than 2-5 GB of data with no heavy writing operations I chose to have PostgreSQL as my primary database with Cassandra as my secondary choice.
+
+
+
+---
 [one]: images/fullstandingscomponentsnapshot.png
 [two]: images/standingscomponentsnapshot.png
 [three]: images/benchmark1.png
@@ -198,3 +288,7 @@ const startTime = new Date().getTime();
 [seven]: images/cassandrabenchmark2.png
 [eight]: images/cassandrabenchmark1.png
 [nine]: images/cassandrabenchmark3.png
+[ten]: images/postgrescsv.png
+[eleven]: images/ec2servererror.png
+[twelve]: images/ec2seederrors.png
+[thirteen]: images/ec210mrecords.png
