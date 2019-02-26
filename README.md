@@ -7,7 +7,8 @@ SDC journal
 2. [February 11th, 2019](#2.11.2019)
 3. [February 12th, 2019](#2.12.2019)
 4. [February 16th, 2019](#2.16.2019)
-5. [Choosing a Database](#database)
+5. [February 24th, 2019](#2.24.2019)
+6. [Choosing a Database](#databases)
 
 ---
 
@@ -198,7 +199,7 @@ const startTime = new Date().getTime();
 
 ---
 
-## February 24th, 2019
+## 2.24.2019
 
 **1. Data Insertions w/ CSV into Postgres**
 
@@ -254,9 +255,9 @@ const knex = require('knex')({
 
 ---
 
-## Database
+## Databases
 
-**Choosing Primary Database**
+**Choosing a Primary Database**
 
 - When comparing my RDBMS (PostgreSQL) and NoSQL (Cassandra) choices for this project it was not clear which would serve my service well as my primary database. I conducted some research to compare the two databases and see where each had their strengths and where they fell short.
 
