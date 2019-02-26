@@ -3,7 +3,7 @@ SDC journal
 
 ## Entries
 
-1. [February 4th, 2019](#2/4/2019)
+1. [February 4th, 2019](#1)
 2. [February 6th, 2019](#2/6/2019)
 2. [February 11th, 2019](#2/11/2019)
 3. [February 12th, 2019](#2/12/2019)
@@ -12,8 +12,10 @@ SDC journal
 6. [Choosing a Database](#databases)
 
 ---
+## 1
 
-## 2/4/2019
+### February 4th, 2019
+
 **1. Choosing FEC Project and Service**
 - The chosen project for our SDC group is the ESPN NFL Team Page. I'll be working on the standings service that was originally made by Kevin Phung. This service renders the NFL Team standings within the different divisions of the league. There are two components to this service that are rendered to the page:
 
