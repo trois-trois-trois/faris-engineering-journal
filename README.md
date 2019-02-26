@@ -7,7 +7,7 @@ SDC journal
 2. [February 11th, 2019](#2.11.2019)
 3. [February 12th, 2019](#2.12.2019)
 4. [February 16th, 2019](#2.16.2019)
-5. [Database](#database)
+5. [Choosing a Database](#database)
 
 ---
 
