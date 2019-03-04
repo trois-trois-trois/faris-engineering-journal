@@ -264,6 +264,50 @@ const knex = require('knex')({
   ![ec2 10m records][thirteen]
 
 ---
+## 7
+
+## March 3rd, 2019
+
+**1. Stress Testing Service in Development**
+
+- In phase 3 our goal is to stress-test our services with our primary database and 10 million records inserted. This can be accomplished by using New Relic to monitor the application and with other utilities like Artillery for load testing and functional testing.
+
+- Setting these tools up doesn't take much work. Once I signed up for a New Relic account it's as simple as creating a configuration file in the root directory of my service and letting New Relic listen for the deployment. I used Artillery to run quick load tests too. An important note to keep in mind is that all stress tests in development are done locally through my computer, so the mileage on stress-testing performance may vary if my teammates stress test my service on their machine.
+
+- Once New Relic was set up I ran a simple Artillery command to perform some initial benchmarks of the standings service under load. The first test was to see how the latency and RPS looked with 10 users and 1 GET request per user.
+
+  ![1st stress test w/ Artillery][fourteen]
+
+- As you can see the initial numbers are promising. With 10 users each sending 1 GET request to the service the median RPS turned out to be 3.8ms. These numbers were trivial so I cranked up the number of users...
+
+  ![2nd stress test w/ Artillery][fifteen]
+
+- The test above is an attempt to increase the number of users to 1000 and with 1 GET request per user. The numbers here are still promising with a median latency of 1.9ms. It's important to get a realistic number of users expected to login to the ESPN standings page to view the Los Angeles Ram's stats, so I decided to increase the number of users to 10,000...
+
+  ![3rd test w/ Artillery][sixteen]
+
+- This is when I encountered several error statements showing up in the server. When researching this error I found out that the number of files were greatly exceeding the open file limit on my Macbook. This is when I decided to decrease the number of users and increase the number of GET requests per user.
+
+  ![4th test w/ Artillery][seventeen]
+
+- The image above was a stress test of about 2500 users each requesting the service 25 times for a total of 62,500 scenarios. After failing at about 10,000 users I wanted to get as close to a realistic number of users as possible, so I brought it down to 5,000 users...then 4,000...3,000...and finally 2,500. My assumption is that users won't attempt to access the standings page for their team that many times, so I tried to keep the number of GET requests per user to about 20-25. Unfortunately I had to keep bringing the number of users down because of the open file limit on my machine. There may have been a way to increase the file limit size via the CLI, but I figured in a real scenario developers would probably be using better hardware to stress-test a similar service. Although, what's great about this image is that it shows a successful attempt at about 1,000 RPS which was the goal of this phase.
+
+  ![new relic dashboard][eighteen]
+
+- Pictured above is the throughput, error rate, and response time of the standings service while running Artillery load tests. You can see that the highest response time was at about 638ms per request and a 1 minute response time at about 8:10pm. This was when I was trying to configure the right number of users and requests per user, at this point I was attempting 5,000 users at about 20 requests per user. Other notable stats include an average throughput of about 2.75k rpm and an average error rate of about 0.0040%.
+
+
+**2. Stress Testing in AWS**
+
+- Stress testing in EC2 was about the same as stress testing in development, except I used Loader.io to facilitate the tests to my service while deployed in EC2. The results of the tests were surprising, I was able to successfully send 10,000 clients to the service in 1 minute with an average response time of about 81ms.
+
+  ![loader.io graph][nineteen]
+
+- The New Relic dashboard showed interesting results as well. The throughput was abour 943rpm, the error rate less than 1%, and the highest response time at 81ms, mirroring what loader.io showed.
+
+  ![new relic ec2][twenty]
+
+---
 
 ## Databases
 
@@ -303,3 +347,10 @@ const knex = require('knex')({
 [eleven]: images/ec2servererror.png
 [twelve]: images/ec2seederrors.png
 [thirteen]: images/ec210mrecords.png
+[fourteen]: images/artillery1sttest.png
+[fifteen]: images/artillery2ndtest.png
+[sixteen]: images/artillery3rdtest.png
+[seventeen]: images/artillery4thtest.png
+[eighteen]: graphs/newrelicdashboard.png
+[nineteen]: graphs/loaderec2.png
+[twenty]: graphs/newrelicdashboardec2.png
