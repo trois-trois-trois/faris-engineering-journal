@@ -5,11 +5,12 @@ SDC journal
 
 1. [February 4th, 2019](#1)
 2. [February 6th, 2019](#2)
-2. [February 11th, 2019](#3)
-3. [February 12th, 2019](#4)
-4. [February 16th, 2019](#5)
-5. [February 24th, 2019](#6)
-6. [Choosing a Database](#databases)
+3. [February 11th, 2019](#3)
+4. [February 12th, 2019](#4)
+5. [February 16th, 2019](#5)
+6. [February 24th, 2019](#6)
+7. [March 3rd, 2019](#7)
+8. [Choosing a Database](#databases)
 
 ---
 ## 1
