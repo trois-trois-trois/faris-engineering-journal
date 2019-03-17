@@ -10,7 +10,8 @@ SDC journal
 5. [February 16th, 2019](#5)
 6. [February 24th, 2019](#6)
 7. [March 3rd, 2019](#7)
-8. [Choosing a Database](#databases)
+8. [March 14th, 2019](#8)
+9. [Choosing a Database](#databases)
 
 ---
 ## 1
@@ -310,6 +311,84 @@ const knex = require('knex')({
 
 ---
 
+```
+`Unhandled rejection Error: connect ECONNREFUSED 172.31.27.205:5432
+at TCPConnectWrap.afterConnect [as oncomplete] (net.js:1083:14)
+```
+
+---
+## 8
+
+### March 14th, 2019
+
+**1. Scaling The Service**
+
+- In my last entry I claimed that I was able to send 10,000 clients to the service in 1 min with a latency of about 81ms. This is not accurate with as explained by the requirements for the project. When I ran my stress-tests in Loader.io I selected the "clients per test" test type, which means I wasn't measuring in requests per second(RPS).
+
+- I switched the test type in Loader to "clients per second". Turns out I could only pull about 2000rps before my service errored out of the test entirely. I had to think of a way to scale my service so I could achieve 10,000 RPS, as that was the goal to shoot for in the project requirements. The most efficient way to scale the service that came to mind, would be to add additional instances of my service in EC2 and apply a load balancer to adjust the site traffic accordingly. The first step in doing this was to split my service and database into separate instances. I took this time to figure out how to create a Docker container too so I could replicate my instances easily.
+
+**2. Splitting the Service and Database**
+- Splitting up the service and database was trivial for the most part. I created another instance and setup my repo to get started. Technically I didn't need my repo in the database instance, but I was not sure what was needed in my first attempt to split my database. The only part I needed to install in my database instance was PostgreSQL and this could be done by running a simple Ubuntu command:
+
+  ```sudo apt-get install postgresql postgresql-contrib```
+
+- From there I just had to make sure that postgres services had started:
+
+  ```service postgresql start```
+
+- Next I copied the URL of my database instance and pasted it to my Knex configuration file so that my service could connect to the database.
+
+  ```
+  ...
+  production: {
+    client: 'postgresql',
+    connection: {
+      host: 'ec2-34-219-142-73.us-west-2.compute.amazonaws.com',
+  ...
+  ```
+
+- The only issue I ran into was when the service had attempted to connect to the database, running into permission issues.
+
+  ![Permission errors in database instance][twenty-one]
+
+- I fixed this by editing the ```postgres.conf``` and ```pg_hba.conf``` files that came with installing postgres by allowing access to all users attempting to connect to the database with an encrypted password.
+
+```
+// postgres.conf file
+listen_addresses = '*' // added to the end of the file
+```
+```
+// pg_hba.conf file
+host  all  all 0.0.0.0/0 md5 // added to the end of the file
+```
+**3. Implementing Docker Images and a Load Balancer**
+
+- One of the goals for this project was learning how to create Docker containers. Initially I read through the dense documentation provided by online by Docker, and practiced implementing a container by following their "Getting Started" guide. I was hoping to dig deeper into docker to try and figure out how to have the container not only start my service and connect to the database, but to also seed my database; This could be done by creating a compose file. Unfortunately this proved to be time-consuming to understand and implement, so I decided to stick with the container having the ability to start my service and connect to the database.
+
+- The minor issue I ran into was which port to expose within the container, as it couldn't be the same as the port number I was using to connect the service externally. I decided to expose my service to port ```4001``` and map that to port ```4000```.
+
+- Next I implemented a load balancer through the EC2 dashboard to initialize multiple instances and scale my service. With my service in a Docker container all I had to do was create each instance and pull the service from Docker Hub. I could've automated this process further by utilizing AMI and Auto-Sclaing through EC2, but this would've made me forfeit my services in docker containers. Forfeiting my docker containers would've been better for performance and therefore was the smart way to go as all my other teammates had done, but I was too proud of the work I had accomplished with Docker.
+
+  ![Creating a load balancer through ec2][twenty-three]
+
+  ![Pulling docker to ec2 instance][twenty-two]
+
+**4. Scaling the Service and Stress Testing**
+
+- Up next was to scale my service by figuring out how many instances I needed to create in order to obtain 10,000 RPS. I started with 2, then 3, and so on until I discovered that 6 instances was enough to obtain 10,000 requests without terrible latency and errors.
+
+  ![terminal of my 6 ec2 service instances and the database instance][twenty-four]
+
+  ![successfully achieved 10krps with Loader test][twenty-five]
+
+**5. Stress Testing the Proxy, Part II**
+
+- With our services properly scaled to handle 10,000RPS each we attempted one more stress-test of our proxy to see if we could get 10,000RPS. Unfortunately the proxy could only handle about 1,500RPS before it errored out. We discovered that the most time-consuming services were my own and Amit's, but with the minimum requirements met and our presentation deadline approaching soon we stopped all further testing of the proxy.
+
+  ![The most time consuming services according to New Relic][twenty-six]
+
+---
+
 ## Databases
 
 **Choosing a Primary Database**
@@ -355,3 +434,9 @@ const knex = require('knex')({
 [eighteen]: graphs/newrelicdashboard.png
 [nineteen]: graphs/loaderec2.png
 [twenty]: graphs/newrelicdashboardec2.png
+[twenty-one]: images/splittingdatabaseerror.png
+[twenty-two]: images/dockerimagec2.png
+[twenty-three]: images/ec2lb.png
+[twenty-four]: images/ec27instances.png
+[twenty-five]: images/10krpsstandings.png
+[twenty-six]: images/timeconsumingservicesfinal.png
